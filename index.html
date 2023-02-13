@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>AI 기반 특허 노이즈 제거 솔루션</title>
+  <link rel="stylesheet" href="{% static 'style.css' %}">
+</head>
+<body>
+  <h1>AI 기반 특허 노이즈 제거 솔루션</h1>
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <label for="api_key">API Key:</label>
+    <input type="text" name="api_key" id="api_key" required>
+    <br>
+    <label for="file">Select XLSX File:</label>
+    <input type="file" name="file" id="file" accept=".xlsx" required>
+    <br>
+    <button type="submit">Submit</button>

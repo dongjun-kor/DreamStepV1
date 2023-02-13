@@ -46,4 +46,3 @@ def home(request):
         return response
 
     return render(request, 'home.html')
-

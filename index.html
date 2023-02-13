@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h2>AI 기반 특허 노이즈 제거 솔루션</h2>
+    <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="api_key">API Key:</label>
+            <input type="text" name="api_key" class="form-control" required>
+        </div>
+        <div class="form-group">
+            <label for="file">Select XLSX File:</label>
+            <input type="file" name="file" class="form-control-file" accept=".xlsx" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Submit</button>
+    </form>
+
+    <hr>
+
+    <h4>Result:</h4>
+    <pre style="font-size: 16px; font-family: monospace; overflow-x: scroll;">
+        {% if result %}
+            Results: {{ result|join:", " }}
+        {% endif %}
+    </pre>
+
+    <a href="{% url 'download_excel' %}" class="btn btn-success">Download Result as Excel</a>
+{% endblock %}

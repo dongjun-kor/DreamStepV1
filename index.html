@@ -1,16 +1,14 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>My App - Home</title>
+    <title>ML Model Prediction</title>
   </head>
   <body>
-    <h1>Welcome to My App</h1>
-    <form action="{% url 'upload' %}" method="post" enctype="multipart/form-data">
+    <h1>Upload your file</h1>
+    <form action="{% url 'process' %}" method="post" enctype="multipart/form-data">
       {% csrf_token %}
-      <label for="api_key">API Key:</label>
-      <input type="text" name="api_key" id="api_key"><br>
-      <label for="file">Select XLSX file:</label>
-      <input type="file" name="file" id="file"><br>
+      <input type="file" name="file">
+      <br><br>
       <input type="submit" value="Submit">
     </form>
   </body>

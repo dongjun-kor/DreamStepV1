@@ -1,62 +1,44 @@
 from django.shortcuts import render
 from django.http import HttpResponse
-from django.http import FileResponse
 from django.core.files.storage import FileSystemStorage
+import pandas as pd
 import requests
 import json
-import pandas as pd
 
 def index(request):
-    return render(request, 'index.html')
-
-def submit(request):
     if request.method == 'POST' and request.FILES['file']:
-        file = request.FILES['file']
+        api_key = request.POST.get('api_key')
+        uploaded_file = request.FILES['file']
         fs = FileSystemStorage()
-        filename = fs.save(file.name, file)
-        uploaded_file_url = fs.url(filename)
-        api_key = request.POST['api_key']
-        url = 'http://85703749-f0d5-489f-8a7f-724648002ab4.koreacentral.azurecontainer.io/score'
-        headers = {'Authorization': 'Bearer ' + api_key, 'Content-Type': 'application/json'}
-        results = []
-        with open(uploaded_file_url, 'rb') as f:
-            df = pd.read_excel(f)
-            for i in range(len(df)):
-                data = {'document': df.iloc[i, 0]}
-                data = {'Inputs': {'data': data}, 'GlobalParameters': {}}
-                data = json.dumps(data)
-                response = requests.post(url, headers=headers, data=data)
-                if response.status_code == 200:
-                    result = json.loads(response.text)['Results']['output1'][0]['predicted_label']
-                    results.append(result)
-        context = {'results': results}
-        return render(request, 'result.html', context)
-    else:
-        return HttpResponse('Please provide a file.')
+        filename = fs.save(uploaded_file.name, uploaded_file)
+        file_url = fs.url(filename)
 
-def download(request):
-    if request.method == 'POST':
-        api_key = request.POST['api_key']
-        url = 'http://85703749-f0d5-489f-8a7f-724648002ab4.koreacentral.azurecontainer.io/score'
-        headers = {'Authorization': 'Bearer ' + api_key, 'Content-Type': 'application/json'}
+        xlsx_file = pd.read_excel(file_url)
         results = []
-        with open('media/documents/data.xlsx', 'rb') as f:
-            df = pd.read_excel(f)
-            for i in range(len(df)):
-                data = {'document': df.iloc[i, 0]}
-                data = {'Inputs': {'data': data}, 'GlobalParameters': {}}
-                data = json.dumps(data)
-                response = requests.post(url, headers=headers, data=data)
-                if response.status_code == 200:
-                    result = json.loads(response.text)['Results']['output1'][0]['predicted_label']
-                    results.append(result)
-        df['Result'] = results
-        df.to_excel('media/documents/result.xlsx', index=False)
-        file = open('media/documents/result.xlsx', 'rb')
-        response = FileResponse(file)
-        response['Content-Type'] = 'application/vnd.ms-excel'
+
+        for document in xlsx_file.iloc[:, 0]:
+            data_list = {'document': document}
+            inputs_list = {'data': data_list}
+            req_list = {'Inputs': inputs_list, 'GlobalParameters': 1.0}
+
+            req_json = json.dumps(req_list)
+            headers = {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + api_key
+            }
+            response = requests.post('http://85703749-f0d5-489f-8a7f-724648002ab4.koreacentral.azurecontainer.io/score', headers=headers, data=req_json)
+
+            if response.status_code >= 400:
+                print('The request failed with status code:', response.status_code)
+                print(response.headers)
+
+            results.append(response.json()['Results'])
+
+        xlsx_file['Result'] = results
+        xlsx_file.to_excel('result.xlsx', index=False)
+        response = HttpResponse(content_type='application/vnd.ms-excel')
         response['Content-Disposition'] = 'attachment; filename="result.xlsx"'
+        xlsx_file.to_excel(response, index=False)
         return response
-    else:
-        return HttpResponse('Please provide an API key.')
 
+    return render(request, 'index.html')

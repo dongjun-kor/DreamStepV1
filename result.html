@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>My App - Result</title>
+  </head>
+  <body>
+    <h1>Result</h1>
+    {% if table %}
+      {{ table|safe }}
+    {% else %}
+      <p>No result to display.</p>
+    {% endif %}
+  </body>
+</html>

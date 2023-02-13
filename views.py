@@ -9,7 +9,7 @@ import ssl
 def allowSelfSignedHttps(allowed):
     # bypass the server certificate verification on client side
     if allowed and not os.environ.get('PYTHONHTTPSVERIFY', '') and getattr(ssl, '_create_unverified_context', None):
-        ssl._create_default_https_context = ssl._create_unverified_context
+        ssl._create_default_https_context = ssl._create_unverified_context()
 
 allowSelfSignedHttps(True) # this line is needed if you use self-signed certificate in your scoring service.
 
@@ -33,7 +33,7 @@ def process(request):
         }
     }
     # encode the data to a byte string
-    body = str.encode(json.dumps(data))
+    body = json.dumps(data).encode('utf-8')
     url = 'http://85703749-f0d5-489f-8a7f-724648002ab4.koreacentral.azurecontainer.io/score'
     # replace this with the primary/secondary key or AMLToken for the endpoint
     api_key = 'h5KzpB2p6x2zfoXFd28YNBzPQHdkLaHh'

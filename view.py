@@ -1,48 +1,32 @@
 from django.shortcuts import render
-from django.core.files.storage import FileSystemStorage
 from django.http import HttpResponse
+from openpyxl import load_workbook
+import json
 import requests
-import pandas as pd
 
-def home(request):
+def index(request):
     if request.method == 'POST':
         api_key = request.POST.get('api_key')
-        file = request.FILES['file']
-        fs = FileSystemStorage()
-        filename = fs.save(file.name, file)
-        file_url = fs.url(filename)
-        df = pd.read_excel(file_url)
-
+        xlsx_file = request.FILES['file']
+        wb = load_workbook(filename=xlsx_file, read_only=True)
+        ws = wb.active
         results = []
-        for doc in df['document']:
-            headers = {
-                'Content-Type': 'application/json',
-                'Authorization': f'Bearer {api_key}'
-            }
-
-            data = {
-                'Inputs': {
-                    'input1': {
-                        'ColumnNames': ['document'],
-                        'Values': [[doc]]
-                    }
-                },
-                'GlobalParameters': {}
-            }
-
-            response = requests.post('http://85703749-f0d5-489f-8a7f-724648002ab4.koreacentral.azurecontainer.io/score', headers=headers, json=data)
-
+        for row in ws.iter_rows(min_row=2, values_only=True):
+            data_list = {'document': row[0]}
+            inputs_list = {'data': data_list}
+            req_list = {'Inputs': inputs_list, 'GlobalParameters': 1.0}
+            req_json = json.dumps(req_list)
+            headers = {'Content-Type': 'application/json', 'Authorization': f'Bearer {api_key}'}
+            response = requests.post('http://85703749-f0d5-489f-8a7f-724648002ab4.koreacentral.azurecontainer.io/score', json=req_json, headers=headers)
             if response.status_code >= 400:
-                return HttpResponse(f'Request failed with status code: {response.status_code}')
-
+                return HttpResponse(f'The request failed with status code: {response.status_code}')
             result = response.json()['Results']['output1']['value']['Values'][0][0]
             results.append(result)
-
-        df['Result'] = results
-
+        wb['A1'] = 'Result'
+        for i, result in enumerate(results):
+            wb.cell(row=i+2, column=1, value=result)
         response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-        response['Content-Disposition'] = f'attachment; filename=result_{pd.Timestamp.now().strftime("%Y-%m-%d_%H-%M-%S")}.xlsx'
-        df.to_excel(response, index=False)
+        response['Content-Disposition'] = 'attachment; filename=result.xlsx'
+        wb.save(response)
         return response
-
-    return render(request, 'home.html')
+    return render(request, 'index.html')

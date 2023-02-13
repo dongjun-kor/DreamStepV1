@@ -60,4 +60,4 @@ jobs:
         with:
           app-name: 'DreamStep'
           slot-name: 'Production'
-          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_7F8247FF52104CDB8CDFBDA40CCBFD1A }}
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_A38B6B4B61854EECACD68155084EE351 }}
